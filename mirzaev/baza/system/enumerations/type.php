@@ -45,8 +45,8 @@ enum type: string
 	{
 		// Exit (success)
 		return match ($this) {
-			type::char, type::string, type::short => 'string',
-			type::char_unsigned, type::short_unsigned, type::integer, type::integer_unsigned, type::long, type::long_unsigned, type::long_long, type::long_long_unsigned => 'integer',
+			type::string, type::short => 'string',
+			type::char, type::char_unsigned, type::short_unsigned, type::integer, type::integer_unsigned, type::long, type::long_unsigned, type::long_long, type::long_long_unsigned => 'integer',
 			type::float, type::double => 'double',
 			type::null => 'NULL',
 			default => throw new exception_unexpected_value('Not found the type')

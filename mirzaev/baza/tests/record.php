@@ -6,11 +6,18 @@ use mirzaev\baza\database,
 	mirzaev\baza\enumerations\encoding,
 	mirzaev\baza\enumerations\type;
 
+// Initializing path to the composer loader file (main project)
+$autoload = __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
+
+// Reinitializing path to the composer loaded file (depencendy project)
+if (!file_exists($autoload)) 
+	$autoload = __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'autoload.php';
+
 // Importing files of thr project and dependencies
-require(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php');
+require($autoload);
 
 // Initializing path to the database file
-$file = __DIR__ . DIRECTORY_SEPARATOR . 'temporary' . DIRECTORY_SEPARATOR . 'database.ba';
+$file = __DIR__ . DIRECTORY_SEPARATOR . 'temporary' . DIRECTORY_SEPARATOR . 'database.baza';
 
 echo "Started testing\n\n\n";
 
@@ -37,9 +44,10 @@ $database = (new database())
 		new column('name', type::string, ['length' => 32]),
 		new column('second_name', type::string, ['length' => 64]),
 		new column('age', type::integer),
-		new column('height', type::float)
+		new column('height', type::float),
+		new column('active', type::char)
 	)
-	->connect(__DIR__ . DIRECTORY_SEPARATOR . 'temporary' . DIRECTORY_SEPARATOR . 'database.ba');
+	->connect($file);
 
 echo '[' . ++$action . "] Initialized the database\n";
 
@@ -48,7 +56,8 @@ $record = $database->record(
 	'Arsen',
 	'Mirzaev',
 	24,
-	165.5
+	165.5,
+	1
 );
 
 echo '[' . ++$action . "] Initialized the record\n";
@@ -60,6 +69,7 @@ echo '[' . ++$action . '][' . ++$test . '][' . ($record->name === 'Arsen' ? 'SUC
 echo '[' . $action . '][' . ++$test . '][' . ($record->second_name === 'Mirzaev' ? 'SUCCESS' : 'FAIL') . "][\"second_name\"] Expected: \"Mirzaev\" (string). Actual: \"$record->second_name\" (" . gettype($record->second_name) . ")\n";
 echo '[' . $action . '][' . ++$test . '][' . ($record->age === 24 ? 'SUCCESS' : 'FAIL') . "][\"age\"] Expected: \"24\" (integer). Actual: \"$record->age\" (" . gettype($record->age) . ")\n";
 echo '[' . $action . '][' . ++$test . '][' . ($record->height === 165.5 ? 'SUCCESS' : 'FAIL') . "][\"height\"] Expected: \"165.5\" (double). Actual: \"$record->height\" (" . gettype($record->height) . ")\n";
+echo '[' . $action . '][' . ++$test . '][' . ($record->active === 1 ? 'SUCCESS' : 'FAIL') . "][\"active\"] Expected: \"1\" (integer). Actual: \"$record->active\" (" . gettype($record->active) . ")\n";
 
 echo '[' . $action . "] The record parameters checks have been completed\n";
 
@@ -77,6 +87,7 @@ $record_ivan = $database->record(
 	'Ivanov',
 	24,
 	(float) 210,
+	0
 );
 
 echo '[' . ++$action . "] Initialized the record\n";
@@ -92,6 +103,7 @@ $record_ivan = $database->record(
 	'Esenina',
 	19,
 	(float) 165,
+	1
 );
 
 echo '[' . ++$action . "] Initialized the record\n";

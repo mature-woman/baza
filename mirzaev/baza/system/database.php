@@ -48,7 +48,7 @@ class database
 	 *
 	 * @var string $database Path to the database file
 	 */
-	public protected(set) string $database = __DIR__ . DIRECTORY_SEPARATOR . 'database.ba';
+	public protected(set) string $database = __DIR__ . DIRECTORY_SEPARATOR . 'database.baza';
 
 	/**
 	 * Backups
@@ -259,20 +259,20 @@ class database
 	 */
 	public function unpack(array $binaries): record
 	{
-		if (count($binaries) === count($this->columns)) {
-			// Amount of binery values matches amount of columns
-
 			// Declaring the buffer of unpacked values
 			$unpacked = [];
 
-			foreach (array_combine($binaries, $this->columns) as $binary => $column) {
+			foreach ($this->columns as $index => $column) {
 				// Iterating over columns
+				
+				// Initializing link to the binary value
+				$binary = $binaries[$index] ?? null;
 
 				if ($column->type === type::string) {
 					// String
 
 					// Unpacking the value
-					$value = unpack($column->type->value . $column->length, $binary)[1];
+					$value = unpack($column->type->value . $column->length, $binary ?? str_repeat("\0", $column->length))[1];
 
 					// Deleting NULL-characters
 					$unnulled = str_replace("\0", '', $value);
@@ -286,7 +286,7 @@ class database
 					// Other types
 
 					// Writing into the buffer of readed values
-					$unpacked[] = unpack($column->type->value, $binary)[1];
+					$unpacked[] = unpack($column->type->value, $binary ?? "\0")[1];
 				}
 			}
 
@@ -295,12 +295,6 @@ class database
 
 			// Exit (success)
 			return $record;
-		} else {
-			// Amount of binery values not matches amount of columns
-
-			// Exit (fail)
-			throw new exception_invalid_argument('Amount of binary values not matches amount of columns');
-		}
 	}
 
 	/**
@@ -377,7 +371,7 @@ class database
 	public function read(?callable $filter = null, ?callable $update = null, bool $delete = false, int $amount = 1, int $offset = 0): ?array
 	{
 		// Opening the database file
-		$file = fopen($this->database, 'r+b');
+		$file = fopen($this->database, 'c+b');
 
 		if (flock($file, LOCK_EX)) {
 			// The file was locked
@@ -408,6 +402,9 @@ class database
 						// Reading the binary value from the database
 						$binaries[] = fread($file, $column->type->size());
 					}
+
+					// Terminate loop when end of file is reached
+					/* if (feof($file)) break 2; */
 				}
 
 				// Terminate loop when end of file is reached
@@ -416,6 +413,9 @@ class database
 				try {
 					// Unpacking the record
 					$record = $this->unpack($binaries);
+
+			if ((bool) array_filter($record->values())) {
+				// The record contains at least one non-empty value
 
 					if (is_null($filter) || $filter($record, $records)) {
 						// Passed the filter
@@ -460,6 +460,9 @@ class database
 							--$amount;
 						}
 					}
+} else {
+				// The record contains only empty values
+}
 				} catch (exception_logic | exception_invalid_argument $exception) {
 					// Writing into the buffer of failed to reading records
 					/* $failed[] = $record; */
