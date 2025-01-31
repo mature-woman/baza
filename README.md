@@ -66,4 +66,5 @@ if ($database->write($record)) {
 ## Used by
 - My site-article about how i was kidnapped by PMC Wagner operatives [mirzaev/repression](https://git.svoboda.works/mirzaev/repression)
 - My decentralized P2P blockchain chats project [mirzaev/notchat](https://git.svoboda.works/mirzaev/notchat)
-- Svoboda Telegram chat-robot [svoboda/negotiator](https://git.svoboda.works/svoboda/negotiator)
+- Svoboda Telegram chat-robot negotiator [svoboda/negotiator](https://git.svoboda.works/svoboda/negotiator)
+ Svoboda Telegram chat-robot [svoboda/negotiator](https://git.svoboda.works/svoboda/negotiator)
