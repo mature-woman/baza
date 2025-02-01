@@ -463,9 +463,11 @@ class database
 } else {
 				// The record contains only empty values
 }
-				} catch (exception_logic | exception_invalid_argument $exception) {
+				} catch (exception_logic | exception_invalid_argument | exception_domain $exception) {
 					// Writing into the buffer of failed to reading records
-					/* $failed[] = $record; */
+
+					// Exit (fail)
+					throw new exception_runtime('Failed to processing the record', previous: $exception);
 				}
 			}
 

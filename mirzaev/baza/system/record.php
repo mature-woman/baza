@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace mirzaev\baza;
 
+// Built-in libraries
+use DomainException as exception_domain;
+
 /**
  * Record
  *
@@ -63,12 +66,23 @@ class record
 	 * @param string $name Name of the parameter
 	 * @param mixed $value Content of the parameter
 	 *
+	 * @throws exception_domain if not found the parameter
+	 *
 	 * @return void
 	 */
 	public function __set(string $name, mixed $value = null): void
 	{
-		// Writing the value and exit
-		$this->values[$name] = $value;
+		if (isset($this->values[$name])) {
+			// Initialized the parameter
+
+			// Writing the value and exit
+			$this->values[$name] = $value;
+		} else {
+			// Not initialized the parameter
+
+			// Exit (fail)
+			throw new exception_domain("Not found the parameter: $name"); 
+		}
 	}
 
 	/**
