@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use mirzaev\baza\database,
 	mirzaev\baza\record,
 	mirzaev\baza\column,
@@ -7,11 +9,24 @@ use mirzaev\baza\database,
 	mirzaev\baza\enumerations\type;
 
 // Initializing path to the composer loader file (main project)
-$autoload = __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
+$autoload = 
+	__DIR__ . DIRECTORY_SEPARATOR . 
+	'..' . DIRECTORY_SEPARATOR . 
+	'..' . DIRECTORY_SEPARATOR . 
+	'..' . DIRECTORY_SEPARATOR . 
+	'vendor' . DIRECTORY_SEPARATOR . 
+	'autoload.php';
 
 // Reinitializing path to the composer loaded file (depencendy project)
 if (!file_exists($autoload)) 
-	$autoload = __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'autoload.php';
+	$autoload = 
+		__DIR__ . DIRECTORY_SEPARATOR . 
+		'..' . DIRECTORY_SEPARATOR . 
+		'..' . DIRECTORY_SEPARATOR . 
+		'..' . DIRECTORY_SEPARATOR . 
+		'..' . DIRECTORY_SEPARATOR . 
+		'..' . DIRECTORY_SEPARATOR . 
+		'autoload.php';
 
 // Importing files of thr project and dependencies
 require($autoload);

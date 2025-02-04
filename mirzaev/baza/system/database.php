@@ -259,42 +259,42 @@ class database
 	 */
 	public function unpack(array $binaries): record
 	{
-			// Declaring the buffer of unpacked values
-			$unpacked = [];
+		// Declaring the buffer of unpacked values
+		$unpacked = [];
 
-			foreach ($this->columns as $index => $column) {
-				// Iterating over columns
-				
-				// Initializing link to the binary value
-				$binary = $binaries[$index] ?? null;
+		foreach ($this->columns as $index => $column) {
+			// Iterating over columns
 
-				if ($column->type === type::string) {
-					// String
+			// Initializing link to the binary value
+			$binary = $binaries[$index] ?? null;
 
-					// Unpacking the value
-					$value = unpack($column->type->value . $column->length, $binary ?? str_repeat("\0", $column->length))[1];
+			if ($column->type === type::string) {
+				// String
 
-					// Deleting NULL-characters
-					$unnulled = str_replace("\0", '', $value);
+				// Unpacking the value
+				$value = unpack($column->type->value . $column->length, $binary ?? str_repeat("\0", $column->length))[1];
 
-					// Encoding the unpacked value
-					$encoded = mb_convert_encoding($unnulled, $this->encoding->value);
+				// Deleting NULL-characters
+				$unnulled = str_replace("\0", '', $value);
 
-					// Writing into the buffer of readed values
-					$unpacked[] = $encoded;
-				} else {
-					// Other types
+				// Encoding the unpacked value
+				$encoded = mb_convert_encoding($unnulled, $this->encoding->value);
 
-					// Writing into the buffer of readed values
-					$unpacked[] = unpack($column->type->value, $binary ?? "\0")[1];
-				}
+				// Writing into the buffer of readed values
+				$unpacked[] = $encoded;
+			} else {
+				// Other types
+
+				// Writing into the buffer of readed values
+				$unpacked[] = unpack($column->type->value, $binary ?? "\0")[1];
 			}
+		}
 
-			// Implementing the record
-			$record = $this->record(...$unpacked);
+		// Implementing the record
+		$record = $this->record(...$unpacked);
 
-			// Exit (success)
-			return $record;
+		// Exit (success)
+		return $record;
 	}
 
 	/**
@@ -368,8 +368,13 @@ class database
 	 *
 	 * @return array|null Readed records
 	 */
-	public function read(?callable $filter = null, ?callable $update = null, bool $delete = false, int $amount = 1, int $offset = 0): ?array
-	{
+	public function read(
+		?callable $filter = null,
+		?callable $update = null,
+		bool $delete = false,
+		int $amount = 1,
+		int $offset = 0
+	): ?array {
 		// Opening the database file
 		$file = fopen($this->database, 'c+b');
 
@@ -414,55 +419,55 @@ class database
 					// Unpacking the record
 					$record = $this->unpack($binaries);
 
-			if ((bool) array_filter($record->values())) {
-				// The record contains at least one non-empty value
+					if ((bool) array_filter($record->values())) {
+						// The record contains at least one non-empty value
 
-					if (is_null($filter) || $filter($record, $records)) {
-						// Passed the filter
+						if (is_null($filter) || $filter($record, $records)) {
+							// Passed the filter
 
-						if ($offset-- <= 0) {
-							// Offsetted
+							if ($offset-- <= 0) {
+								// Offsetted
 
-							if ($delete) {
-								// Requested deleting
+								if ($delete) {
+									// Requested deleting
 
-								// Moving to the beginning of the row
-								fseek($file, -$this->length, SEEK_CUR);
+									// Moving to the beginning of the row
+									fseek($file, -$this->length, SEEK_CUR);
 
-								// Writing NUL-characters instead of the record to the database file
-								fwrite($file, str_repeat("\0", $this->length));
+									// Writing NUL-characters instead of the record to the database file
+									fwrite($file, str_repeat("\0", $this->length));
 
-								// Moving to the end of the row
-								fseek($file, $this->length, SEEK_CUR);
-							} else if ($update) {
-								// Requested updating
+									// Moving to the end of the row
+									fseek($file, $this->length, SEEK_CUR);
+								} else if ($update) {
+									// Requested updating
 
-								// Updating the record
-								$update($record);
+									// Updating the record
+									$update($record);
 
-								// Packing the updated record
-								$packed = $this->pack($record);
+									// Packing the updated record
+									$packed = $this->pack($record);
 
-								// Moving to the beginning of the row
-								fseek($file, -$this->length, SEEK_CUR);
+									// Moving to the beginning of the row
+									fseek($file, -$this->length, SEEK_CUR);
 
-								// Writing to the database file
-								fwrite($file, $packed);
+									// Writing to the database file
+									fwrite($file, $packed);
 
-								// Moving to the end of the row
-								fseek($file, $this->length, SEEK_CUR);
+									// Moving to the end of the row
+									fseek($file, $this->length, SEEK_CUR);
+								}
+
+								// Writing into the buffer of records
+								$records[] = $record;
+
+								// Decreasing the amount iterator
+								--$amount;
 							}
-
-							// Writing into the buffer of records
-							$records[] = $record;
-
-							// Decreasing the amount iterator
-							--$amount;
 						}
+					} else {
+						// The record contains only empty values
 					}
-} else {
-				// The record contains only empty values
-}
 				} catch (exception_logic | exception_invalid_argument | exception_domain $exception) {
 					// Writing into the buffer of failed to reading records
 
@@ -483,6 +488,16 @@ class database
 
 		// Exit (fail)
 		return null;
+	}
+
+	/**
+	 * Count
+	 *
+	 * @return int Amount of records
+	 */
+	public function count(): int{
+		// Exit (success)
+		return $this->length > 0 && file_exists($this->database) ? filesize($this->database) / $this->length : 0;
 	}
 
 	/**
