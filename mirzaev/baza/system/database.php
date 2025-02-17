@@ -495,7 +495,11 @@ class database
 	 *
 	 * @return int Amount of records
 	 */
-	public function count(): int{
+	public function count(): int
+	{
+		// Deleting the database file cache
+		clearstatcache(true, $this->database);
+
 		// Exit (success)
 		return $this->length > 0 && file_exists($this->database) ? filesize($this->database) / $this->length : 0;
 	}
