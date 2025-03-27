@@ -493,6 +493,8 @@ class database
 	/**
 	 * Count
 	 *
+	 * @throws exception_runtime If the database is corrupted (counting result is float)
+	 *
 	 * @return int Amount of records
 	 */
 	public function count(): int
@@ -500,8 +502,11 @@ class database
 		// Deleting the database file cache
 		clearstatcache(true, $this->database);
 
-		// Exit (success)
-		return $this->length > 0 && file_exists($this->database) ? filesize($this->database) / $this->length : 0;
+		// Counting
+		$amount = $this->length > 0 && file_exists($this->database) ? filesize($this->database) / $this->length : 0;
+
+		// Exit (success/fail)
+		return is_int($amount) ? $amount : throw new exception_runtime('The database is corrupted');
 	}
 
 	/**
