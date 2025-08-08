@@ -41,7 +41,7 @@ enum type: string
 	 *
 	 * @return string Type
 	 */
-	public function type(): string
+	public function abstract(): string
 	{
 		// Exit (success)
 		return match ($this) {

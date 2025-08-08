@@ -51,38 +51,35 @@ class column
 	 *
 	 * Length of every binary value that will be written to the database file
 	 *
-	 * @throws exception_logic if the length property is already initialized
+	 * @throws exception_logic if the `length` property is already initialized
 	 * @throws exception_logic if the type is not initialized
-	 * @throws exception_domain if the type can not has length
+	 * @throws exception_domain if the type has fixed length
 	 *
-	 * @var int $length Length of every binary values
+	 * @var int $length Binary length of the column
 	 */
 	public protected(set) int $length {
 		// Write
-		set (int $value) {
+		set(int $value) {
 			if (isset($this->length)) {
 				// Already been initialized
 
 				// Exit (fail)
-				throw new exception_logic('The length property is already initialized');
+				throw new exception_logic('The `length` property is already initialized');
 			} else if (!isset($this->type)) {
 				// The type is not initialized
 
 				// Exit (fail)
 				throw new exception_logic('The type of the column values is not initialized');
-			} else if (match ($this->type) {
-				type::string => true,
-				default => false
-			}) {
-				// The type has length
+			} else if ($this->type === type::string) {
+				// String
 
 				// Writing into the property
 				$this->length = $value;
 			} else {
-				// The type has no length
+				// Other type
 
 				// Exit (fail)
-				throw new exception_domain('The "' . $this->type->name . '" type can not has length');
+				throw new exception_domain('The "' . $this->type->name . '" type has fixed ' . $this->type->size() . ' bit length');
 			}
 		}
 	}
@@ -92,7 +89,7 @@ class column
 	 *
 	 * @param string $name Name of the column
 	 * @param type $type Type of the column values
-	 * @param array $parameters Parameters of the column
+	 * @param array $parameters Parameters of the column (length, segments)
 	 *
 	 * @return void
 	 */
@@ -119,5 +116,37 @@ class column
 				throw new exceptiin_invalid_argument("Not found the property: $name");
 			}
 		}
+	}
+
+	/**
+	 * Pack
+	 *
+	 * @param string|int|float $value Data to packing
+	 *
+	 * @return string|false Packed binary value
+	 */
+	public function pack(string|int|float $value): string|false
+	{
+		// Exit (success)
+		return match ($this->type) {
+			type::string => pack($this->type->value . $this->length, $value),
+			default =>	pack($this->type->value, $value)
+		};
+	}
+
+	/**
+	 * Unpack
+	 *
+	 * @param string $binary Packed binary data
+	 *
+	 * @return string|false Unpacked value
+	 */
+	public function unpack(string $binary): string|int|float|false
+	{
+		// Exit (success)
+		return match ($this->type) {
+			type::string => unpack($this->type->value . $this->length, $binary ?? str_repeat("\0", $this->length))[1],
+			default => unpack($this->type->value, $binary ?? "\0")[1]
+		} ?? false;
 	}
 }

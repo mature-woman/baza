@@ -5,13 +5,15 @@ declare(strict_types=1);
 namespace mirzaev\baza;
 
 // Files of the project
-use mirzaev\baza\enumerations\encoding,
+use mirzaev\baza\enumerations\architecture,
+	mirzaev\baza\enumerations\encoding,
 	mirzaev\baza\enumerations\type;
 
 // Built-in libraries
 use LogicException as exception_logic,
 	InvalidArgumentException as exception_invalid_argument,
-	RuntimeException as exception_runtime;
+	RuntimeException as exception_runtime,
+	DomainException as exception_domain;
 
 /**
  * Database
@@ -81,6 +83,27 @@ class database
 	public protected(set) int $length;
 
 	/**
+	 * Architecture
+	 * 
+	 * @var architecture $architecture Architecture of the CPU
+	 */
+	public architecture $architecture;
+
+	/**
+	 * Constructor
+	 *
+	 * @throws exception_domain If failed to detemine the system architecture
+	 */
+	public function __construct()
+	{
+		$this->architecture = match (PHP_INT_SIZE) {
+			4 => architecture::x86,
+			8 => architecture::x86_64,
+			default => throw new exception_domain('Failed to determine the system architecture'),
+		};
+	}
+
+	/**
 	 * Encoding
 	 *
 	 * Write encoding into the database instance property
@@ -125,7 +148,7 @@ class database
 			if ($column->type === type::string) {
 				// String
 
-				// Adding the column string maximum length to the database instance property
+				// Adding the column binary length into the database instance property
 				$this->length += $column->length;
 			} else {
 				// Other types
@@ -182,7 +205,7 @@ class database
 			foreach ($this->columns as $index => $column) {
 				// Iterating over columns
 
-				if (gettype($values[$index]) === $column->type->type()) {
+				if (gettype($values[$index]) === $column->type->abstract()) {
 					// The value type matches the column values type
 
 					// Writing named index value into the buffer of combined values
@@ -228,19 +251,30 @@ class database
 		foreach ($this->columns as $column) {
 			// Iterating over columns
 
-			if ($column->type === type::string) {
-				// String
+			if ($column instanceof column) {
+				// Initialized the column
 
-				// Converting to the database encoding
-				$value = mb_convert_encoding($record->values()[$column->name], $this->encoding->value);
+				// Initializing the record value
+				$value = $record->values()[$column->name];
 
-				// Packung the value and writing into the buffer of packed values
-				$packed .= pack($column->type->value . $column->length, $value);
-			} else {
-				// Other types
+				if (isset($value)) {
+					// Initialized the record value
 
-				// Packung the value and writing into the buffer of packed values
-				$packed .= pack($column->type->value, $record->values()[$column->name]);
+					if ($column->type === type::string) {
+						// String
+
+						// Converting to the database encoding
+						$value = mb_convert_encoding($value, $this->encoding->value);
+
+						// Packung the value and writing into the buffer of packed values
+						$packed .= $column->pack($value);
+					} else {
+						// Other types
+
+						// Packung the value and writing into the buffer of packed values
+						$packed .= $column->pack($value);
+					}
+				}
 			}
 		}
 
@@ -265,28 +299,32 @@ class database
 		foreach ($this->columns as $index => $column) {
 			// Iterating over columns
 
-			// Initializing link to the binary value
-			$binary = $binaries[$index] ?? null;
+			if ($column instanceof column) {
+				// Initialized the column
 
-			if ($column->type === type::string) {
-				// String
+				// Initializing link to the binary value
+				$binary = $binaries[$index] ?? null;
 
-				// Unpacking the value
-				$value = unpack($column->type->value . $column->length, $binary ?? str_repeat("\0", $column->length))[1];
+				if ($column->type === type::string) {
+					// String
 
-				// Deleting NULL-characters
-				$unnulled = str_replace("\0", '', $value);
+					// Unpacking the value
+					$value = $column->unpack($binary);
 
-				// Encoding the unpacked value
-				$encoded = mb_convert_encoding($unnulled, $this->encoding->value);
+					// Deleting NULL-characters
+					$unnulled = str_replace("\0", '', $value);
 
-				// Writing into the buffer of readed values
-				$unpacked[] = $encoded;
-			} else {
-				// Other types
+					// Encoding the unpacked value
+					$encoded = mb_convert_encoding($unnulled, $this->encoding->value);
 
-				// Writing into the buffer of readed values
-				$unpacked[] = unpack($column->type->value, $binary ?? "\0")[1];
+					// Writing into the buffer of readed values
+					$unpacked[] = $encoded;
+				} else {
+					// Other types
+
+					// Writing into the buffer of readed values
+					$unpacked[] = $column->unpack($binary);
+				}
 			}
 		}
 
@@ -553,9 +591,9 @@ class database
 	 * @throws exception_runtime if failed to copying the database file to the backup file
 	 * @throws exception_runtime if failed to initialize the backups files directory
 	 *
-	 * @return int|false Unique identifier of the created backup file
+	 * @return string|false Unique identifier of the created backup file
 	 */
-	public function save(): int|false
+	public function save(): string|false
 	{
 		if ($this->backups()) {
 			// Initialized the backups files directory
