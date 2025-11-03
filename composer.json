@@ -27,6 +27,9 @@
 	"require": {
 		"php": "^8.4"
 	},
+	"suggest": {
+		"mirzaev/record": "Active Record pattern"
+	},
 	"autoload": {
 		"psr-4": {
 			"mirzaev\\baza\\": "mirzaev/baza/system/"
