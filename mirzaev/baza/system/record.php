@@ -72,16 +72,16 @@ class record
 	 */
 	public function __set(string $name, mixed $value = null): void
 	{
-		if (isset($this->values[$name])) {
-			// Initialized the parameter
+		if (property_exists(static, $name)) {
+			// Exist the property
 
 			// Writing the value and exit
 			$this->values[$name] = $value;
 		} else {
-			// Not initialized the parameter
+			// Not exist the property
 
 			// Exit (fail)
-			throw new exception_domain("Not found the parameter: $name"); 
+			throw new exception_domain("Not found the property: $name"); 
 		}
 	}
 
