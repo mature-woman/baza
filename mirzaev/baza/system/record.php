@@ -72,7 +72,7 @@ class record
 	 */
 	public function __set(string $name, mixed $value = null): void
 	{
-		if (property_exists(static, $name)) {
+		if (array_key_exists($name, $this->values)) {
 			// Exist the property
 
 			// Writing the value and exit
